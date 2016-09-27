@@ -58,6 +58,7 @@ SERVICES=(
   kafka
   kapacitor
   telegrafagent
+  telegrafhaproxy
   registry
   zookeeper
 )
@@ -342,9 +343,30 @@ telegrafagent() { # Owner: ndegory
     -e INPUT_PROCESS_ENABLED=true \
     -e INPUT_SWAP_ENABLED=true \
     -e INPUT_SYSTEM_ENABLED=true \
+    -e INPUT_HAPROXY_ENABLED=false \
     -e INFLUXDB_TIMEOUT=20 \
     --mount type=bind,source=/var/run/utmp,target=/var/run/utmp \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
+    appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
+}
+
+telegrafhaproxy() { # Owner: ndegory
+  docker service create --with-registry-auth --network amp-swarm --name telegraf-haproxy \
+    --label io.amp.role="infrastructure" \
+    -e OUTPUT_INFLUXDB_ENABLED=true \
+    -e INFLUXDB_URL=http://influxdb:8086 \
+    -e INPUT_DOCKER_ENABLED=false \
+    -e INPUT_CPU_ENABLED=false \
+    -e INPUT_DISK_ENABLED=false \
+    -e INPUT_DISKIO_ENABLED=false \
+    -e INPUT_KERNEL_ENABLED=false \
+    -e INPUT_MEM_ENABLED=false \
+    -e INPUT_PROCESS_ENABLED=false \
+    -e INPUT_SWAP_ENABLED=false \
+    -e INPUT_SYSTEM_ENABLED=false \
+    -e INPUT_HAPROXY_ENABLED=true \
+    -e INPUT_HAPROXY_SERVER=http://haproxy:8082/haproxy?stats \
+    -e INFLUXDB_TIMEOUT=20 \
     appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
 }
 
