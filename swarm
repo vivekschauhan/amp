@@ -21,7 +21,7 @@ IMAGES=(
   appcelerator/amp-ui:latest
   appcelerator/elasticsearch-amp:latest
   appcelerator/grafana:latest
-  appcelerator/haproxy:latest
+  appcelerator/haproxy:1.0.1
   appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
   appcelerator/kafka:${KAFKA_VERSION}
   appcelerator/kapacitor:kapacitor-${INFLUXDATA_VERSION}
@@ -158,9 +158,9 @@ initswarm() {
   docker node inspect self > /dev/null 2>&1 || docker swarm inspect > /dev/null 2>&1 || (echo "> Initializing swarm" && docker swarm init)
 }
 
-# set up the amp-swarm overlay network
+# set up the amp-infra overlay network
 createnetwork() {
-  docker network ls | grep amp-swarm || (echo "> Creating overlay network 'amp-swarm'" && docker network create -d overlay amp-swarm)
+  docker network ls | grep amp-infra || (echo "> Creating overlay network 'amp-infra'" && docker network create -d overlay amp-infra)
   docker network ls | grep amp-public || (echo "> Creating overlay network 'amp-public'" && docker network create -d overlay amp-public)
 }
 
@@ -173,10 +173,15 @@ pullimages() {
 }
 
 removeservices() {
+  #remove infra service
   stop=$(docker service ls -q --filter "label=io.amp.role=$ROLE")
   [[ ! -z ${stop[0]} ]] && echo "> Removing current infrastructure services..." && docker service rm $stop || true
+  #remove user service
   stop=$(docker service ls -q --filter "label=io.amp.role=user")
   [[ ! -z ${stop[0]} ]] && echo "> Removing current user services..." && docker service rm $stop || true
+  #remove user network
+  stop=$(docker network ls -q --filter "label=io.amp.role=user")
+  [[ ! -z ${stop[0]} ]] && echo "> Removing current user networks..." && docker network rm $stop || true
 }
 
 # start the services on the swarm
@@ -213,7 +218,7 @@ monitor() {
 }
 
 registry() { # Owner: freignat91
-  docker service create --network amp-swarm --name registry \
+  docker service create --network amp-infra --name registry \
   --label io.amp.role="infrastructure" \
   --mount type=bind,source=$HOME/registry/data,target=/var/lib/registry \
   -p 5000:5000 \
@@ -221,7 +226,7 @@ registry() { # Owner: freignat91
 }
 
 amplifier() {
-  docker service create --with-registry-auth --network amp-swarm,amp-public --name amplifier \
+  docker service create --with-registry-auth --network amp-infra,amp-public --name amplifier \
     --label io.amp.role="infrastructure" \
     --constraint "node.role == manager" \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
@@ -229,7 +234,7 @@ amplifier() {
 }
 
 ampagent() { # Owner: freignat91
-  docker service create --with-registry-auth --network amp-swarm --name amp-agent \
+  docker service create --with-registry-auth --network amp-infra --name amp-agent \
     --mode global \
     --label io.amp.role="infrastructure" \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
@@ -238,13 +243,13 @@ ampagent() { # Owner: freignat91
 
 # DEPENDENCIES kafka
 amplogworker() { # Owner: bertrand-quenin
-  docker service create --with-registry-auth --network amp-swarm --name amp-log-worker \
+  docker service create --with-registry-auth --network amp-infra --name amp-log-worker \
     --label io.amp.role="infrastructure" \
     appcelerator/amp-log-worker:latest
 }
 
 ampui() { # Owner: freignat91
-  docker service create --with-registry-auth --network amp-swarm --name amp-ui \
+  docker service create --with-registry-auth --network amp-infra --name amp-ui \
     --label io.amp.role="infrastructure" \
     --constraint "node.role == manager" \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
@@ -252,7 +257,7 @@ ampui() { # Owner: freignat91
 }
 
 elasticsearch() { # Owner: bertrand-quenin
-  docker service create --with-registry-auth --network amp-swarm --name elasticsearch \
+  docker service create --with-registry-auth --network amp-infra --name elasticsearch \
     --label io.amp.role="infrastructure" \
     -p 9200:9200 \
     -p 9300:9300 \
@@ -260,7 +265,7 @@ elasticsearch() { # Owner: bertrand-quenin
 }
 
 etcd() { # Owner: subfuzion
-  docker service create --with-registry-auth --network amp-swarm --name etcd \
+  docker service create --with-registry-auth --network amp-infra --name etcd \
     --label io.amp.role="infrastructure" \
     -p 2379:2379 \
     -p 2380:2380 \
@@ -271,7 +276,7 @@ etcd() { # Owner: subfuzion
   }
 
 grafana() { # Owner: ndegory
-  docker service create --with-registry-auth --network amp-swarm --name grafana \
+  docker service create --with-registry-auth --network amp-infra --name grafana \
     --label io.amp.role="infrastructure" \
     -p 6001:3000 \
     -e INFLUXDB_HOST=influxdb \
@@ -282,7 +287,7 @@ grafana() { # Owner: ndegory
 }
 
 influxdb() { # Owner: ndegory
-  docker service create --with-registry-auth --network amp-swarm --name influxdb \
+  docker service create --with-registry-auth --network amp-infra --name influxdb \
     --label io.amp.role="infrastructure" \
     -p 8086:8086 \
     -p 8083:8083 \
@@ -294,7 +299,7 @@ influxdb() { # Owner: ndegory
 
 # DEPENDENCIES zookeepeer
 kafka() { # Owner: bertrand-quenin
-  docker service create --with-registry-auth --network amp-swarm --name kafka \
+  docker service create --with-registry-auth --network amp-infra --name kafka \
     --label io.amp.role="infrastructure" \
     -p 9092:9092 \
     -e ZOOKEEPER_CONNECT=zookeeper:2181 \
@@ -303,7 +308,7 @@ kafka() { # Owner: bertrand-quenin
 }
 
 kapacitor() { # Owner: ndegory
-  docker service create --with-registry-auth --network amp-swarm --name kapacitor \
+  docker service create --with-registry-auth --network amp-infra --name kapacitor \
     --label io.amp.role="infrastructure" \
     -e INFLUXDB_URL=http://influxdb:8086 \
     -e KAPACITOR_HOSTNAME=auto \
@@ -318,15 +323,15 @@ kapacitor() { # Owner: ndegory
 }
 
 haproxy() { # Owner: freignat91
-  docker service create --with-registry-auth --network amp-swarm,amp-public --name haproxy \
+  docker service create --with-registry-auth --network amp-infra,amp-public --name haproxy \
     --label io.amp.role="infrastructure" \
     -p 8080:8080 \
     -p 80:80 \
-    appcelerator/haproxy:latest
+    appcelerator/haproxy:1.0.1
 }
 
 telegrafagent() { # Owner: ndegory
-  docker service create --with-registry-auth --network amp-swarm --name telegraf-agent \
+  docker service create --with-registry-auth --network amp-infra --name telegraf-agent \
     --mode global \
     --label io.amp.role="infrastructure" \
     -e OUTPUT_INFLUXDB_ENABLED=true \
@@ -349,7 +354,7 @@ telegrafagent() { # Owner: ndegory
 }
 
 zookeeper() { # Owner: bertrand-quenin
-  docker service create --with-registry-auth --network amp-swarm --name zookeeper \
+  docker service create --with-registry-auth --network amp-infra --name zookeeper \
     --label io.amp.role="infrastructure" \
     -p 2181:2181 \
     -p 2888:2888 \
