@@ -2,23 +2,25 @@
 
 AMP is supported on these Ubuntu operating systems:
 
+- Ubuntu Precise 12.04 (LTS)
 - Ubuntu Xenial 16.04 (LTS)
 - Ubuntu Wily 15.10
 - Ubuntu Trusty 14.04 (LTS)
 
-This page instructs you to install using Docker-managed release packages and
+This page instructs you to install using AMP release packages and
 installation mechanisms. Using these packages ensures you get the latest release
-of Docker. If you wish to install using Ubuntu-managed packages, consult your
-Ubuntu documentation.
+of Docker.
 
 >**Note**: Ubuntu Utopic 14.10 and 15.04 exist in Docker's `APT` repository but
 > are no longer officially supported.
 
 ## Prerequisites
 
-Docker requires a 64-bit installation regardless of your Ubuntu version.
+AMP requires a 64-bit installation regardless of your Ubuntu version.
 Additionally, your kernel must be 3.10 at minimum. The latest 3.10 minor version
 or a newer maintained version are also acceptable.
+
+>**Note**: If you want to start fresh, you can also follow this [quick tutorial](./vbox-xenial-tuto.md) to initialize your AMP environment.
 
 Kernels older than 3.10 lack some of the features required to run Docker
 containers. These older versions are known to have bugs which cause data loss

@@ -15,7 +15,7 @@ To install on a cloud provider:
 
 2. Decide which OS you want to run on the cloud host.
 
-3. Understand AMP prerequisites and install process for the chosen OS. See [Install Docker Engine](../index.md) for a list of supported systems and links to the install guides.
+3. Understand AMP prerequisites and install process for the chosen OS. See [Install AMP](../index.md) for a list of supported systems and links to the install guides.
 
 4. Create a host with an AMP supported OS, and install AMP per the instructions for that OS.
 

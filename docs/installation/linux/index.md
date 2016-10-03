@@ -1,4 +1,4 @@
-# Install Docker Engine on Linux
+# Install AMP on Linux
 
 AMP is supported on several Linux distributions. Installation instructions are available for the following:
 
