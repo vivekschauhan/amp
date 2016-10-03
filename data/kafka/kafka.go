@@ -4,6 +4,7 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/appcelerator/amp-kafka-pilot/pilot/api/admin"
 	"google.golang.org/grpc"
+	"strings"
 )
 
 // Kafka singleton
@@ -24,7 +25,8 @@ func (k *Kafka) Connect(host string) error {
 	}
 
 	// gRPC administration client
-	clientConn, err := grpc.Dial(host, grpc.WithInsecure())
+	apiHost := strings.Split(host, ":")[0] + ":4242"
+	clientConn, err := grpc.Dial(apiHost, grpc.WithInsecure())
 	if err != nil {
 		return err
 	}

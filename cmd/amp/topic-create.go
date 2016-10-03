@@ -28,8 +28,8 @@ var (
 
 func init() {
 	flags := createCmd.Flags()
-	flags.Uint64VarP(&partitions, "partitions", "p", 1, "Number of partitions")
-	flags.Uint64VarP(&replicationFactor, "replicationFactor", "r", 1, "Replication factor")
+	flags.Uint64Var(&partitions, "partitions", 1, "Number of partitions")
+	flags.Uint64Var(&replicationFactor, "replicationFactor", 1, "Replication factor")
 	TopicCmd.AddCommand(createTopicCmd)
 }
 

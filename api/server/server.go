@@ -56,6 +56,7 @@ func Start(config Config) {
 	})
 	topic.RegisterTopicServer(s, &topic.Server{
 		Store: runtime.Store,
+		Kafka: runtime.Kafka,
 	})
 
 	// start listening
